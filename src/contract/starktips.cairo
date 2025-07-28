@@ -48,4 +48,31 @@ pub mod StarKTips{
         self.total_pages.write(0);
     }
 
+
+
+    #[generate_trait]
+    impl InternalImpl of InternalTrait{
+        fn _add_supported_token( ref self: ContractState,
+            token_address: ContractAddress, name: ByteArray, symbol: ByteArray, decimals: u8, min_tip_amount: u256) {
+            let token_info = TokenInfo {
+                    address: token_address,
+                    name: name.clone(),
+                    symbol: symbol.clone(), 
+                    decimals,
+                    is_supported:  true,
+                    min_tip_amount
+            };
+
+            let mut previous_token_info = self.supported_tokens.read(token_address);
+            self.supported_tokens.write(token_address, token_info);
+
+            self.emit(TokenAdded {
+                token_address: token_address,
+                symbol: symbol,
+                decimals: decimals,
+            })
+        }
+    }
+
 }
+
