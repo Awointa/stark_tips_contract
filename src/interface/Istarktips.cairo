@@ -1,5 +1,5 @@
 #[starknet::interface]
-pub trait IStarKTips<TContractState> {
+pub trait Istarktips<TContractState> {
     fn create_tip_page(
         ref self: TContractState, 
         creator_address: ContractAddress, 
