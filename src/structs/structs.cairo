@@ -23,12 +23,12 @@ pub struct Tip {
     timestamp: u64,
 }
 
-#[derive(Clone, Debug, Serde, starknet::Store)]
+#[derive(Drop, Clone, Debug, Serde, starknet::Store)]
 pub struct TokenInfo {
-    address: ContractAddress,
-    name: ByteArray,
-    symbol: ByteArray,
-    decimals: u8,
-    is_supported: bool,
-    min_tip_amount: u256,
+    pub address: ContractAddress,
+    pub name: ByteArray,
+    pub symbol: ByteArray,
+    pub decimals: u8,
+    pub is_supported: bool,
+    pub min_tip_amount: u256,
 }
