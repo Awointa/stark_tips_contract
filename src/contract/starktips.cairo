@@ -3,7 +3,8 @@ pub mod StarKTips{
     use starknet::{ContractAddress, get_caller_address, get_contract_address, get_block_timestamp, contract_address_const };
     use stark_tips_contract::structs::structs::{TipPage, TokenInfo, Tip};
     use stark_tips_contract::events::events::{TipPageCreated, TipSent, TokenAdded, TokenRemoved};
-    use starknet::storage::{Map};
+    use starknet::storage::{Map, StorageMapWriteAccess, 
+    StorageMapReadAccess,StoragePointerWriteAccess, StoragePointerReadAccess};
 
     #[storage]
     struct Storage {
@@ -32,7 +33,7 @@ pub mod StarKTips{
       }
 
     #[event]
-    #[derive(starknet::Event)]
+    #[derive(starknet::Event, Drop)]
     enum Event{
         TipPageCreated: TipPageCreated,
         TipSent: TipSent,
@@ -40,6 +41,11 @@ pub mod StarKTips{
         TokenRemoved: TokenRemoved,
     }
 
-    
+    #[constructor]
+    fn constructor(ref self: ContractState, owner: ContractAddress) {
+        self.owner.write(owner);
+        self.next_page_id.write(1);
+        self.total_pages.write(0);
+    }
 
 }
