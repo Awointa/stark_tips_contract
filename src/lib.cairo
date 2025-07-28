@@ -1,3 +1,7 @@
 pub mod interface{
-    pub mod IStarKTips;
+    pub mod Istarktips;
+}
+
+pub mod contract{
+    pub mod starktips;
 }
