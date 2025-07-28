@@ -1,3 +1,6 @@
+use starknet::ContractAddress;
+use stark_tips_contract::structs::structs::{TipPage, Tip};
+
 #[starknet::interface]
 pub trait Istarktips<TContractState> {
     fn create_tip_page(
@@ -14,9 +17,9 @@ pub trait Istarktips<TContractState> {
         message: ByteArray
     );
     
-    fn get_page_info(self: @TContractState, page_id: u256) -> StarKTips::TipPage;
+    fn get_page_info(self: @TContractState, page_id: u256) -> TipPage;
     
-    fn get_tips_for_page(self: @TContractState, page_id: u256) -> Array<StarKTips::Tip>;
+    fn get_tips_for_page(self: @TContractState, page_id: u256) -> Array<Tip>;
     
     fn get_creator_pages(self: @TContractState, creator: ContractAddress) -> Array<u256>;
     
@@ -35,5 +38,5 @@ pub trait Istarktips<TContractState> {
     
     fn get_strk_allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
     
-    fn get_recent_tips(self: @TContractState, limit: u32) -> Array<StarKTips::Tip>;
+    fn get_recent_tips(self: @TContractState, limit: u32) -> Array<Tip>;
 }
