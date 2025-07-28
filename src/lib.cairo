@@ -5,3 +5,11 @@ pub mod interface{
 pub mod contract{
     pub mod starktips;
 }
+
+pub mod structs{
+    pub mod structs;
+}
+
+pub mod events{
+    pub mod events;
+}
