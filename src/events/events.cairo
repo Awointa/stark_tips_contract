@@ -14,9 +14,9 @@ pub struct TipSent {
 
 #[derive(Drop, starknet::Event)]
 pub struct TokenAdded {
-    token_address: ContractAddress,
-    symbol: ByteArray,
-    decimals: u8,
+   pub token_address: ContractAddress,
+   pub symbol: ByteArray,
+   pub decimals: u8,
 }
 
 #[derive(Drop, starknet::Event)]
