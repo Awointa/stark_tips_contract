@@ -1,47 +1,31 @@
-use starknet::ContractAddress;
 
-use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
+use snforge_std::{ContractClassTrait, DeclareResultTrait, declare, spy_events, start_cheat_caller_address, stop_cheat_caller_address};
+use starknet::{ContractAddress, contract_address_const, get_block_timestamp};
 
-use stark_tips_contract::IHelloStarknetSafeDispatcher;
-use stark_tips_contract::IHelloStarknetSafeDispatcherTrait;
-use stark_tips_contract::IHelloStarknetDispatcher;
-use stark_tips_contract::IHelloStarknetDispatcherTrait;
+use stark_tips_contract::contract::starktips::StarKTips;
+use stark_tips_contract::errors::errors::Errors;
+use stark_tips_contract::interface::Istarktips::Istarktips;
+use stark_tips_contract::structs::structs::{TipPage, Tip};
 
-fn deploy_contract(name: ByteArray) -> ContractAddress {
-    let contract = declare(name).unwrap().contract_class();
-    let (contract_address, _) = contract.deploy(@ArrayTrait::new()).unwrap();
-    contract_address
-}
 
-#[test]
-fn test_increase_balance() {
-    let contract_address = deploy_contract("HelloStarknet");
+fn setup() -> (ContractAddress, ContractAddress, ContractAddress){
+    let owner = contract_address_const::<'owner'>();
 
-    let dispatcher = IHelloStarknetDispatcher { contract_address };
+    // Deploy MockToken for payment
+    let token_class = declare("MockToken").unwrap().contract_class();
+    let (token_address, _) = token_class.deploy(@array![owner.into(), owner.into()]).unwrap();
 
-    let balance_before = dispatcher.get_balance();
-    assert(balance_before == 0, 'Invalid balance');
+    let declare_result = declare("StarKTips");
+    assert!(declare_result.is_ok(), "Failed to declare StarKTips contract");
 
-    dispatcher.increase_balance(42);
+    let contract_class = declare_result.unwrap().contract_class();
+    let mut calldata = array![owner.into(), token_address.into()];
 
-    let balance_after = dispatcher.get_balance();
-    assert(balance_after == 42, 'Invalid balance');
-}
+    let deploy_result = contract_class.deploy(@calldata);
+    assert!(deploy_result.is_ok(), "Failed to deploy StarKTips contract");
 
-#[test]
-#[feature("safe_dispatcher")]
-fn test_cannot_increase_balance_with_zero_value() {
-    let contract_address = deploy_contract("HelloStarknet");
+    let (contract_address, _) = deploy_result.unwrap();
 
-    let safe_dispatcher = IHelloStarknetSafeDispatcher { contract_address };
+    (contract_address, owner, token_address)
 
-    let balance_before = safe_dispatcher.get_balance().unwrap();
-    assert(balance_before == 0, 'Invalid balance');
-
-    match safe_dispatcher.increase_balance(0) {
-        Result::Ok(_) => core::panic_with_felt252('Should have panicked'),
-        Result::Err(panic_data) => {
-            assert(*panic_data.at(0) == 'Amount cannot be 0', *panic_data.at(0));
-        }
-    };
 }
