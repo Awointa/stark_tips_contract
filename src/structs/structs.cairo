@@ -1,15 +1,15 @@
 use starknet::ContractAddress;
 
-#[derive(Clone, Debug, Serde, starknet::Store)]
+#[derive(Drop, Clone, Debug, Serde, starknet::Store)]
 pub struct TipPage {
-    id: u256,
-    creator: ContractAddress,
-    name: ByteArray,
-    description: ByteArray,
-    created_at: u64,
-    total_tips_recieved: u256,
-    total_amount_recieved: u256,
-    is_active: bool,    
+    pub id: u256,
+    pub creator: ContractAddress,
+    pub name: ByteArray,
+    pub description: ByteArray,
+    pub created_at: u64,
+    pub total_tips_recieved: u256,
+    pub total_amount_recieved: u256,
+    pub is_active: bool,    
 }
 
 #[derive(Clone, Debug, Serde, starknet::Store)]
