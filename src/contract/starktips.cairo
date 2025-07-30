@@ -41,6 +41,8 @@ mod StarkTips {
     impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
+    const STRK_CONTRACT_ADDRESS: felt252 = 0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d;
+
     #[storage]
     struct Storage {
         #[substorage(v0)]
@@ -158,7 +160,7 @@ mod StarkTips {
             self.total_pages.write(self.total_pages.read() + 1);
 
             self.emit(Event::TipPageCreated(TipPageCreated {
-                page_id: page_id,
+                page_id,
                 creator: creator_address,
                 page_name,
                 description: description,
@@ -167,6 +169,61 @@ mod StarkTips {
 
 
             page_id
+        }
+
+        fn send_tip(
+            ref self: ContractState, 
+            page_id: u256, 
+            amount: u256, 
+            message: ByteArray
+        ){
+            assert(amount >= 10000000000000000, Errors::INVALID_AMOUNT);
+
+            let mut tip_page = self.tip_pages.read(page_id);
+            assert(tip_page.is_active, Errors::PAGE_INACTIVE);
+            assert(tip_page.id != 0, Errors::PAGE_NOT_FOUND);
+
+            let sender = get_caller_address();
+            let creator = tip_page.creator;
+
+            let strk_contract = IERC20Dispatcher{contract_address: contract_address_const::<STRK_CONTRACT_ADDRESS>()};
+
+            let sender_balance = strk_contract.balance_of(sender);
+            assert(sender_balance >= amount, Errors::INSUFFICIENT_BALANCE);
+
+            let allowance = strk_contract.allowance(sender, get_contract_address());
+            assert(allowance >= amount, Errors::INSUFFICIENT_ALLOWANCE);
+
+            let success = strk_contract.transfer_from(sender, creator, amount);
+
+            assert(success, Errors::TRANSFER_FAILED);
+
+            let _tip = Tip {
+                id: self.page_tip_count.read(page_id) + 1,
+                page_id,
+                sender,
+                creator,
+                amount,
+                message: message.clone(),
+                timestamp: get_block_timestamp()
+            };
+
+            tip_page.total_tips_recieved += 1;
+            tip_page.total_amount_recieved += amount;
+            self.tip_pages.write(page_id, tip_page);
+
+            let mut page_tip_count = self.page_tip_count.read(page_id);
+            self.page_tip_count.write(page_id, page_tip_count + 1);
+
+            self.emit(Event::TipSent(TipSent {
+                page_id,
+                sender,
+                creator,
+                amount,
+                message: message.clone(),
+                timestamp: get_block_timestamp()
+            }));
+
         }
 
         fn get_page_info(self: @ContractState, page_id: u256) -> TipPage {
