@@ -4,6 +4,7 @@ pub mod interface{
 
 pub mod contract{
     pub mod starktips;
+    pub mod MockToken;
 }
 
 pub mod structs{
