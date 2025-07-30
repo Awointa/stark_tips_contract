@@ -10,12 +10,12 @@ pub trait Istarktips<TContractState> {
         description: ByteArray
     ) -> u256;
     
-    // fn send_tip(
-    //     ref self: TContractState, 
-    //     page_id: u256, 
-    //     amount: u256, 
-    //     message: ByteArray
-    // );
+    fn send_tip(
+        ref self: TContractState, 
+        page_id: u256, 
+        amount: u256, 
+        message: ByteArray
+    );
     
     fn get_page_info(self: @TContractState, page_id: u256) -> TipPage;
     
