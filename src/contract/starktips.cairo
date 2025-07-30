@@ -1,6 +1,22 @@
+// SPDX-License-Identifier: MIT
+// Compatible with OpenZeppelin Contracts for Cairo ^2.0.0
+
+const PAUSER_ROLE: felt252 = selector!("PAUSER_ROLE");
+const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
+
 #[starknet::contract]
-pub mod StarKTips{
-    use starknet::{ContractAddress, get_caller_address, get_contract_address, get_block_timestamp, contract_address_const };
+mod StarkTips {
+    use openzeppelin::access::accesscontrol::{AccessControlComponent, DEFAULT_ADMIN_ROLE};
+    use openzeppelin::introspection::src5::SRC5Component;
+    use openzeppelin::security::pausable::PausableComponent;
+    use openzeppelin::upgrades::interface::IUpgradeable;
+    use openzeppelin::upgrades::UpgradeableComponent;
+    use starknet::{ClassHash, ContractAddress};
+    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
+    use super::{PAUSER_ROLE, UPGRADER_ROLE};
+
+    use starknet::{get_caller_address, get_contract_address, get_block_timestamp, contract_address_const};
+    
     use stark_tips_contract::structs::structs::{TipPage, TokenInfo, Tip};
     use stark_tips_contract::events::events::{TipPageCreated, TipSent, TokenAdded, TokenRemoved};
     use stark_tips_contract::interface::Istarktips::Istarktips;
@@ -8,8 +24,34 @@ pub mod StarKTips{
     StorageMapReadAccess,StoragePointerWriteAccess, StoragePointerReadAccess};
     use stark_tips_contract::errors::errors::Errors;
 
+
+    component!(path: PausableComponent, storage: pausable, event: PausableEvent);
+    component!(path: AccessControlComponent, storage: accesscontrol, event: AccessControlEvent);
+    component!(path: SRC5Component, storage: src5, event: SRC5Event);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+
+    // External
+    #[abi(embed_v0)]
+    impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
+    #[abi(embed_v0)]
+    impl AccessControlMixinImpl = AccessControlComponent::AccessControlMixinImpl<ContractState>;
+
+    // Internal
+    impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
+    impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
+
     #[storage]
     struct Storage {
+        #[substorage(v0)]
+        pausable: PausableComponent::Storage,
+        #[substorage(v0)]
+        accesscontrol: AccessControlComponent::Storage,
+        #[substorage(v0)]
+        src5: SRC5Component::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
+
         tip_pages: Map<u256, TipPage>,
         creator_page_count: Map<ContractAddress, u256>, 
         creator_pages: Map<(ContractAddress, u256), u256>,  //(creator, index) -> page_id
@@ -20,27 +62,20 @@ pub mod StarKTips{
         next_page_id: u256,
         total_pages: u256,
         owner: ContractAddress,
-
-        // // Multi-token support
-        // supported_tokens: Map<ContractAddress, TokenInfo>,
-        // page_accepted_tokens: Map<u256, Array<ContractAddress>>,
     }
 
-    // Standard ERC20 interface
-    #[starknet::interface]
-    trait IERC20<TContractState> {
-        fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
-        fn transfer_from(ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool;
-        fn balance_of(self: @TContractState, account: ContractAddress) -> u256;
-        fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
-        fn name(self: @TContractState) -> ByteArray;
-        fn symbol(self: @TContractState) -> ByteArray;
-        fn decimals(self: @TContractState) -> u8;
-      }
-
     #[event]
-    #[derive(starknet::Event, Drop)]
-    enum Event{
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        PausableEvent: PausableComponent::Event,
+        #[flat]
+        AccessControlEvent: AccessControlComponent::Event,
+        #[flat]
+        SRC5Event: SRC5Component::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
+
         TipPageCreated: TipPageCreated,
         TipSent: TipSent,
         TokenAdded: TokenAdded,
@@ -48,17 +83,53 @@ pub mod StarKTips{
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress) {
-        self.owner.write(owner);
+    fn constructor(
+        ref self: ContractState,
+        default_admin: ContractAddress,
+        token_address: ContractAddress
+    ) {
+        self.accesscontrol.initializer();
+
+        self.accesscontrol._grant_role(DEFAULT_ADMIN_ROLE, default_admin);
+        self.accesscontrol._grant_role(PAUSER_ROLE, default_admin);
+        self.accesscontrol._grant_role(UPGRADER_ROLE, default_admin);
+        self.owner.write(default_admin);
         self.next_page_id.write(1);
         self.total_pages.write(0);
     }
 
+    #[generate_trait]
+    #[abi(per_item)]
+    impl ExternalImpl of ExternalTrait {
+        #[external(v0)]
+        fn pause(ref self: ContractState) {
+            self.accesscontrol.assert_only_role(PAUSER_ROLE);
+            self.pausable.pause();
+        }
+
+        #[external(v0)]
+        fn unpause(ref self: ContractState) {
+            self.accesscontrol.assert_only_role(PAUSER_ROLE);
+            self.pausable.unpause();
+        }
+    }
+
+    //
+    // Upgradeable
+    //
+    
+    #[abi(embed_v0)]
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            self.accesscontrol.assert_only_role(UPGRADER_ROLE);
+            self.upgradeable.upgrade(new_class_hash);
+        }
+    }
 
     #[abi(embed_v0)]
     impl  StarkTipsImpl of Istarktips<ContractState>{
         fn create_tip_page(ref self: ContractState, creator_address: ContractAddress, page_name: ByteArray, description: ByteArray) -> u256{
-            assert(page_name == "", Errors::EMPTY_NAME);
+            assert(page_name != "", Errors::EMPTY_NAME);
 
             let caller = get_caller_address();
 
@@ -97,8 +168,44 @@ pub mod StarKTips{
 
             page_id
         }
-    }
-   
 
+        fn get_page_info(self: @ContractState, page_id: u256) -> TipPage {
+            let tip_page = self.tip_pages.read(page_id);
+            assert(tip_page.is_active, Errors::PAGE_INACTIVE);
+            assert(tip_page.id != 0, Errors::PAGE_NOT_FOUND);
+
+            tip_page
+        }
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
