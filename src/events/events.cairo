@@ -5,9 +5,9 @@ pub struct TipSent {
    pub page_id: u256,
    pub sender: ContractAddress,
    pub creator: ContractAddress,
-   pub token_address: ContractAddress,
+   // pub token_address: ContractAddress,
    pub amount: u256,
-   pub usd_value: u256,
+   // pub usd_value: u256,
    pub message: ByteArray,
    pub timestamp: u64,
 }
