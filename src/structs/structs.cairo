@@ -12,15 +12,15 @@ pub struct TipPage {
     pub is_active: bool,    
 }
 
-#[derive(Clone, Debug, Serde, starknet::Store)]
+#[derive(Drop, Clone, Debug, Serde, starknet::Store)]
 pub struct Tip {
-    id: u256,
-    page_id: u256,
-    sender: ContractAddress,
-    creator: ContractAddress,
-    amount: u256,
-    message: ByteArray,
-    timestamp: u64,
+    pub id: u256,
+    pub page_id: u256,
+    pub sender: ContractAddress,
+    pub creator: ContractAddress,
+    pub amount: u256,
+    pub message: ByteArray,
+    pub timestamp: u64,
 }
 
 #[derive(Drop, Clone, Debug, Serde, starknet::Store)]
