@@ -1,31 +1,63 @@
+use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 
 use snforge_std::{ContractClassTrait, DeclareResultTrait, declare, spy_events, start_cheat_caller_address, stop_cheat_caller_address};
 use starknet::{ContractAddress, contract_address_const, get_block_timestamp};
 
-use stark_tips_contract::contract::starktips::StarKTips;
+use stark_tips_contract::interface::Istarktips::{IstarktipsDispatcher, IstarktipsDispatcherTrait};
+// use stark_tips_contract::contract::starktips::StarKTips;
 use stark_tips_contract::errors::errors::Errors;
-use stark_tips_contract::interface::Istarktips::Istarktips;
 use stark_tips_contract::structs::structs::{TipPage, Tip};
 
 
-fn setup() -> (ContractAddress, ContractAddress, ContractAddress){
-    let owner = contract_address_const::<'owner'>();
+fn setup() -> (ContractAddress, ContractAddress, ContractAddress) {
+    // create default admin address
+    let owner: ContractAddress = contract_address_const::<'1'>();
 
-    // Deploy MockToken for payment
+    // Deploy mock token for payment
     let token_class = declare("MockToken").unwrap().contract_class();
-    let (token_address, _) = token_class.deploy(@array![owner.into(), owner.into()]).unwrap();
+    let (token_address, _) = token_class
+        .deploy(@array![owner.into(), // recipient
+        owner.into() // owner
+        ])                                                                      
+        .unwrap();
 
-    let declare_result = declare("StarKTips");
-    assert!(declare_result.is_ok(), "Failed to declare StarKTips contract");
+    // deploy store contract
+    let declare_result = declare("StarkTips");
+    assert(declare_result.is_ok(), 'contract declaration failed');
 
     let contract_class = declare_result.unwrap().contract_class();
     let mut calldata = array![owner.into(), token_address.into()];
 
     let deploy_result = contract_class.deploy(@calldata);
-    assert!(deploy_result.is_ok(), "Failed to deploy StarKTips contract");
+    assert(deploy_result.is_ok(), 'contract deployment failed');
 
     let (contract_address, _) = deploy_result.unwrap();
 
     (contract_address, owner, token_address)
+}
 
+#[test]
+fn test_create_tip_page() { 
+    let (contract_address, _, _) = setup();
+    let dispatcher = IstarktipsDispatcher {contract_address};
+
+    let user: ContractAddress = contract_address_const::<'2'>();
+
+    start_cheat_caller_address(contract_address, user);
+
+    let page_name: ByteArray = "Test Page";
+    let description: ByteArray  = "This is a test page";
+    let created_at = get_block_timestamp();
+
+    let page_id = dispatcher.create_tip_page(user, page_name, description.clone());
+    
+    // Verify the page was created
+    let tip_page: TipPage = dispatcher.get_page_info(page_id);
+    assert_eq!(tip_page.name, "Test Page");
+    assert_eq!(tip_page.description, description);
+    assert_eq!(tip_page.creator, user);
+    assert_eq!(tip_page.created_at, created_at);
+    assert_eq!(tip_page.is_active, true);
+    
+    stop_cheat_caller_address(contract_address);
 }
