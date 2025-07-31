@@ -24,6 +24,12 @@ mod MockToken {
     impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
+    #[starknet::interface]
+    trait IMockToken<TContractState> {
+        fn mint(ref self: TContractState, recipient: ContractAddress, amount: u256);
+    }
+
+
     #[storage]
     struct Storage {
         #[substorage(v0)]
