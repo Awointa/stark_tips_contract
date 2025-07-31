@@ -19,9 +19,9 @@ pub trait Istarktips<TContractState> {
     
     fn get_page_info(self: @TContractState, page_id: u256) -> TipPage;
     
-    // fn get_tips_for_page(self: @TContractState, page_id: u256) -> Array<Tip>;
+    fn get_tips_for_page(self: @TContractState, page_id: u256) -> Array<Tip>;
     
-    // fn get_creator_pages(self: @TContractState, creator: ContractAddress) -> Array<u256>;
+    fn get_creator_pages(self: @TContractState, creator: ContractAddress) -> Array<u256>;
     
     // fn update_tip_page(
     //     ref self: TContractState,

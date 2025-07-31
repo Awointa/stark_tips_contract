@@ -233,6 +233,38 @@ mod StarkTips {
 
             tip_page
         }
+
+        fn get_tips_for_page(self: @ContractState, page_id: u256) -> Array<Tip> {
+            let tip_page = self.tip_pages.read(page_id);
+            assert(tip_page.is_active, Errors::PAGE_INACTIVE);
+            assert(tip_page.id != 0, Errors::PAGE_NOT_FOUND);
+            
+            let mut tips: Array<Tip> = ArrayTrait::new();
+            let mut index: u256 = 1;
+
+            loop {
+                let tip = self.page_tips.read((page_id, index));
+                if tip.id == 0 {
+                    break;
+                }
+                tips.append(tip);
+                index += 1;
+            }
+
+            tips
+        }
+
+        fn get_creator_pages(self: @ContractState, creator: ContractAddress) -> Array<u256>{
+            let mut pages: Array<u256> = ArrayTrait::new();
+            let page_count: u256 = self.creator_page_count.read(creator);
+            for i in 0..page_count {
+                let page_id = self.creator_pages.read((creator, i));
+                if page_id != 0 {
+                    pages.append(page_id);
+                }
+            }
+            pages
+        }
     }
 }
 
