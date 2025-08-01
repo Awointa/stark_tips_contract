@@ -18,7 +18,7 @@ mod StarkTips {
     use starknet::{get_caller_address, get_contract_address, get_block_timestamp, contract_address_const};
     
     use stark_tips_contract::structs::structs::{TipPage, TokenInfo, Tip};
-    use stark_tips_contract::events::events::{TipPageCreated, TipSent, TokenAdded, TokenRemoved};
+    use stark_tips_contract::events::events::{TipPageCreated, TipSent, TipPageDeactivated,TokenAdded, TokenRemoved};
     use stark_tips_contract::interface::Istarktips::Istarktips;
     use starknet::storage::{Map, StorageMapWriteAccess, 
     StorageMapReadAccess,StoragePointerWriteAccess, StoragePointerReadAccess};
@@ -82,6 +82,7 @@ mod StarkTips {
         TipSent: TipSent,
         TokenAdded: TokenAdded,
         TokenRemoved: TokenRemoved,
+        TipPageDeactivated: TipPageDeactivated,
     }
 
     #[constructor]
@@ -264,6 +265,23 @@ mod StarkTips {
                 }
             }
             pages
+        }
+
+        fn deactivate_page(ref self: ContractState, page_id:u256){
+            let mut tip_page = self.tip_pages.read(page_id);
+            assert(tip_page.id != 0, Errors::PAGE_NOT_FOUND);
+
+            let caller = get_caller_address();
+            assert(caller == tip_page.creator, Errors::UNAUTHORIZED);
+
+            tip_page.is_active = false;
+            self.tip_pages.write(page_id, tip_page.clone());
+
+            self.emit(Event::TipPageDeactivated(TipPageDeactivated {
+                page_id,
+                creator: tip_page.creator
+            }));
+
         }
     }
 }

@@ -64,10 +64,24 @@ fn test_create_tip_page() {
 
 #[test]
 fn test_send_tip(){
-    let (contract_address, _, token_address) = setup();
+    let (contract_address, owner, token_address) = setup();
     let dispatcher = IstarktipsDispatcher {contract_address};
+    let strk_contract = IERC20Dispatcher{contract_address: token_address};
 
+   
     let user: ContractAddress = contract_address_const::<'2'>();
+
+    start_cheat_caller_address(token_address, owner); // Set owner as caller for token contract
+    strk_contract.transfer(
+        user, // recipient
+        1000000000000000000 // 1 STRK
+    );
+    stop_cheat_caller_address(token_address);
+
+    // Verify user received tokens
+    let user_balance = strk_contract.balance_of(user);
+    assert(user_balance >= 1000000000000000000, 'User should have tokens');
+
 
     start_cheat_caller_address(contract_address, user);
 
@@ -77,16 +91,23 @@ fn test_send_tip(){
     // Create a tip page
     let page_id = dispatcher.create_tip_page(user, page_name, description.clone());
     
-    // Send a tip
-    let amount: u256 = 10000000000000000; // 0.01 STRK
-    let message: ByteArray = "Great work!";
-    
-    dispatcher.send_tip(page_id, amount, message.clone());
+   // User needs to approve the contract to spend their tokens
+   start_cheat_caller_address(token_address, user);
+   let amount: u256 = 10000000000000000; // 0.01 STRK
+   strk_contract.approve(contract_address, amount);
+   stop_cheat_caller_address(token_address);
 
-    // Verify the tip was sent
-    let tip_page: TipPage = dispatcher.get_page_info(page_id);
-    assert_eq!(tip_page.total_tips_recieved, 1);
-    assert_eq!(tip_page.total_amount_recieved, amount);
+   // Switch back to tip contract context
+   start_cheat_caller_address(contract_address, user);
+   
+   // Send a tip
+   let message: ByteArray = "Great work!";
+   dispatcher.send_tip(page_id, amount, message.clone());
 
-    stop_cheat_caller_address(contract_address);
+   // Verify the tip was sent
+   let tip_page: TipPage = dispatcher.get_page_info(page_id);
+   assert_eq!(tip_page.total_tips_recieved, 1);
+   assert_eq!(tip_page.total_amount_recieved, amount);
+
+   stop_cheat_caller_address(contract_address);
 }
