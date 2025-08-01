@@ -31,6 +31,8 @@ pub trait Istarktips<TContractState> {
     // );
     
     fn deactivate_page(ref self: TContractState, page_id: u256);
+
+    fn activate_page(ref self: TContractState, page_id: u256);
     
     // fn get_total_pages(self: @TContractState) -> u256;
     
