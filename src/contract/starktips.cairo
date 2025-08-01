@@ -318,6 +318,28 @@ mod StarkTips {
             let strk_contract = IERC20Dispatcher{contract_address: contract_address_const::<STRK_CONTRACT_ADDRESS>()};
             strk_contract.allowance(owner, spender)
         }
+
+        fn get_recent_tips(self: @ContractState, limit: u32) -> Array<Tip> {
+            let mut tips: Array<Tip> = ArrayTrait::new();
+            let total_pages = self.get_total_pages();
+            let mut count: u32 = 0;
+
+            for page_id in (1..=total_pages) {
+                if count >= limit {
+                    break;
+                }
+                let page_tips = self.get_tips_for_page(page_id);
+                for tip in page_tips {
+                    if count >= limit {
+                        break;
+                    }
+                    tips.append(tip);
+                    count += 1;
+                }
+            }
+
+            tips
+        }
     }
 }
 
