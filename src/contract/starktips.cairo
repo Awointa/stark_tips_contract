@@ -304,6 +304,10 @@ mod StarkTips {
                 activated_at: get_block_timestamp()
             }));
         }
+
+        fn get_total_pages(self: @ContractState) -> u256 {
+            self.total_pages.read()
+        }
     }
 }
 
