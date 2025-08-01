@@ -36,5 +36,15 @@ pub struct TipPageCreated {
 #[derive(Clone, Drop, starknet::Event)]
 pub struct TipPageDeactivated {
     pub page_id: u256,
-    pub creator: ContractAddress
+    pub page_name: ByteArray,
+    pub creator: ContractAddress,
+    pub deactivated_at: u64
+   }
+
+#[derive(Clone, Drop, starknet::Event)]
+pub struct TipPageActivated {
+    pub page_id: u256,
+    pub page_name: ByteArray,
+    pub creator: ContractAddress,
+    pub activated_at: u64
    }
