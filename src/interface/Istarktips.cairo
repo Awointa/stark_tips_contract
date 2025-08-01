@@ -36,7 +36,7 @@ pub trait Istarktips<TContractState> {
     
     fn get_total_pages(self: @TContractState) -> u256;
     
-    // fn get_strk_balance(self: @TContractState, account: ContractAddress) -> u256;
+    fn get_strk_balance(self: @TContractState, account: ContractAddress) -> u256;
     
     // fn get_strk_allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
     

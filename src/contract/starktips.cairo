@@ -308,6 +308,11 @@ mod StarkTips {
         fn get_total_pages(self: @ContractState) -> u256 {
             self.total_pages.read()
         }
+
+        fn get_strk_balance(self: @ContractState, account: ContractAddress) -> u256 {
+            let strk_contract = IERC20Dispatcher{contract_address: contract_address_const::<STRK_CONTRACT_ADDRESS>()};
+            strk_contract.balance_of(account)
+        }
     }
 }
 
