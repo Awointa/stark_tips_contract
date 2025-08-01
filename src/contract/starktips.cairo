@@ -313,6 +313,11 @@ mod StarkTips {
             let strk_contract = IERC20Dispatcher{contract_address: contract_address_const::<STRK_CONTRACT_ADDRESS>()};
             strk_contract.balance_of(account)
         }
+
+        fn get_strk_allowance(self: @ContractState, owner: ContractAddress, spender: ContractAddress) -> u256 {
+            let strk_contract = IERC20Dispatcher{contract_address: contract_address_const::<STRK_CONTRACT_ADDRESS>()};
+            strk_contract.allowance(owner, spender)
+        }
     }
 }
 

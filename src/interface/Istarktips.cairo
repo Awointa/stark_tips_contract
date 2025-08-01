@@ -38,7 +38,7 @@ pub trait Istarktips<TContractState> {
     
     fn get_strk_balance(self: @TContractState, account: ContractAddress) -> u256;
     
-    // fn get_strk_allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
+    fn get_strk_allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
     
     // fn get_recent_tips(self: @TContractState, limit: u32) -> Array<Tip>;
 }
