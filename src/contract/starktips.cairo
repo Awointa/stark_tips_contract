@@ -236,7 +236,6 @@ mod StarkTips {
 
         fn get_page_info(self: @ContractState, page_id: u256) -> TipPage {
             let tip_page = self.tip_pages.read(page_id);
-            assert(tip_page.is_active, Errors::PAGE_INACTIVE);
             assert(tip_page.id != 0, Errors::PAGE_NOT_FOUND);
 
             tip_page
