@@ -5,7 +5,7 @@ const PAUSER_ROLE: felt252 = selector!("PAUSER_ROLE");
 const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
 
 #[starknet::contract]
-mod StarkTips {
+pub mod StarkTips {
     use openzeppelin::access::accesscontrol::{AccessControlComponent, DEFAULT_ADMIN_ROLE};
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::security::pausable::PausableComponent;
@@ -17,7 +17,7 @@ mod StarkTips {
 
     use starknet::{get_caller_address, get_contract_address, get_block_timestamp, contract_address_const};
     
-    use stark_tips_contract::structs::structs::{TipPage, TokenInfo, Tip};
+    use stark_tips_contract::structs::structs::{TipPage, Tip};
     use stark_tips_contract::events::events::{TipPageCreated, TipSent, TipPageDeactivated, TipPageActivated, TokenAdded, TokenRemoved};
     use stark_tips_contract::interface::Istarktips::Istarktips;
     use starknet::storage::{Map, StorageMapWriteAccess, 
@@ -70,7 +70,7 @@ mod StarkTips {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+   pub enum Event {
         #[flat]
         PausableEvent: PausableComponent::Event,
         #[flat]
@@ -314,15 +314,15 @@ mod StarkTips {
             self.total_pages.read()
         }
 
-        fn get_strk_balance(self: @ContractState, account: ContractAddress) -> u256 {
-            let strk_contract = IERC20Dispatcher{contract_address: self.token_address.read()};
-            strk_contract.balance_of(account)
-        }
+        // fn get_strk_balance(self: @ContractState, account: ContractAddress) -> u256 {
+        //     let strk_contract = IERC20Dispatcher{contract_address: self.token_address.read()};
+        //     strk_contract.balance_of(account)
+        // }
 
-        fn get_strk_allowance(self: @ContractState, owner: ContractAddress, spender: ContractAddress) -> u256 {
-            let strk_contract = IERC20Dispatcher{contract_address: self.token_address.read()};
-            strk_contract.allowance(owner, spender)
-        }
+        // fn get_strk_allowance(self: @ContractState, owner: ContractAddress, spender: ContractAddress) -> u256 {
+        //     let strk_contract = IERC20Dispatcher{contract_address: self.token_address.read()};
+        //     strk_contract.allowance(owner, spender)
+        // }
 
         fn get_recent_tips(self: @ContractState, limit: u32) -> Array<Tip> {
             let mut tips: Array<Tip> = ArrayTrait::new();
