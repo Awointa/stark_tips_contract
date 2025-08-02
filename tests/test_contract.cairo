@@ -179,3 +179,121 @@ fn test_get_creator_pages() {
     assert_eq!(*pages[0], page1_id);
     assert_eq!(*pages[1], page2_id);
 }
+
+#[test]
+fn test_activate_page() {
+    let (contract_address, _, _) = setup();
+    let dispatcher = IstarktipsDispatcher {contract_address};
+
+    let user: ContractAddress = contract_address_const::<'2'>();
+
+    start_cheat_caller_address(contract_address, user);
+    
+    // Create a page
+    let page_id = dispatcher.create_tip_page(user, "Test Page", "Description");
+    
+    let tip_page: TipPage = dispatcher.get_page_info(page_id);
+
+    // Activate the page
+    if(!tip_page.is_active){dispatcher.activate_page(page_id)};
+    
+    stop_cheat_caller_address(contract_address);
+
+    // Verify the page is Activated
+   
+    assert_eq!(tip_page.is_active, true);
+}
+
+#[test]
+fn test_deactivate_page() {
+    let (contract_address, _, _) = setup();
+    let dispatcher = IstarktipsDispatcher {contract_address};
+    
+    let user: ContractAddress = contract_address_const::<'2'>();
+    start_cheat_caller_address(contract_address, user);
+    // Create a page
+    let page_id = dispatcher.create_tip_page(user, "Test Page", "Description");
+
+    // Deactivate the page
+    dispatcher.deactivate_page(page_id);
+    stop_cheat_caller_address(contract_address);
+    // Verify the page is deactivated
+    let tip_page: TipPage = dispatcher.get_page_info(page_id);
+    assert_eq!(tip_page.is_active, false);
+}
+
+#[test]
+fn test_get_total_pages() {
+    let (contract_address, _, _) = setup();
+    let dispatcher = IstarktipsDispatcher {contract_address};
+
+    let user: ContractAddress = contract_address_const::<'2'>();
+
+    start_cheat_caller_address(contract_address, user);
+    
+    // Create multiple pages
+    dispatcher.create_tip_page(user, "Page 1", "Description 1");
+    dispatcher.create_tip_page(user, "Page 2", "Description 2");
+    
+    stop_cheat_caller_address(contract_address);
+
+    // Get total pages
+    let total_pages = dispatcher.get_total_pages();
+    
+    assert_eq!(total_pages, 2);
+}
+
+#[test]
+fn test_get_recent_tips() {
+    let (contract_address, owner, token_address) = setup();
+    let dispatcher = IstarktipsDispatcher {contract_address};
+
+    let strk_contract = IERC20Dispatcher{contract_address: token_address};
+
+   
+    let user: ContractAddress = contract_address_const::<'2'>();
+
+    start_cheat_caller_address(token_address, owner); // Set owner as caller for token contract
+    strk_contract.transfer(
+        user, // recipient
+        10000000000000000000 // 10 STRK
+    );
+    stop_cheat_caller_address(token_address);
+
+    // Verify user received tokens
+    let user_balance = strk_contract.balance_of(user);
+    assert(user_balance >= 10000000000000000000, 'User should have tokens');
+
+
+    start_cheat_caller_address(contract_address, user);
+    let page_name: ByteArray = "Test Page";
+    let description: ByteArray  = "This is a test page";
+    // Create a tip page
+    dispatcher.create_tip_page(user, page_name, description.clone());
+    stop_cheat_caller_address(contract_address);
+
+   // User needs to approve the contract to spend their tokens
+    let amount: u256 = 100000000000000000; // 0.01 STRK
+    start_cheat_caller_address(token_address, user);
+    strk_contract.approve(contract_address, amount);
+    stop_cheat_caller_address(token_address);
+
+
+    start_cheat_caller_address(contract_address, user);
+    
+    // Create a page
+    let page_id = dispatcher.create_tip_page(user, "Test Page", "Description");
+    
+    // Send a tip
+    let amount: u256 = 100000000000000000; // 0.01 STRK
+    let message: ByteArray = "Great work!";
+    dispatcher.send_tip(page_id, amount, message.clone());
+    
+    stop_cheat_caller_address(contract_address);
+
+    // Get recent tips
+    let recent_tips: Array<Tip> = dispatcher.get_recent_tips(1);
+    
+    assert_eq!(recent_tips.len(), 1);
+    assert_eq!(*recent_tips[0].amount, amount);
+}
