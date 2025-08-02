@@ -381,6 +381,35 @@ fn test_deactivate_page() {
 }
 
 #[test]
+fn test_tip_page_deactivated_event() {
+    let (contract_address, _, _) = setup();
+    let dispatcher = IstarktipsDispatcher {contract_address};   
+    let mut spy = spy_events();
+
+    let user: ContractAddress = contract_address_const::<'2'>();
+
+    start_cheat_caller_address(contract_address, user);
+    // Create a page
+    let page_id = dispatcher.create_tip_page(user, "Test Page", "Description");
+    // Deactivate the page
+    dispatcher.deactivate_page(page_id);
+    stop_cheat_caller_address(contract_address);
+    
+    // Verify the event was emitted
+    spy.assert_emitted(
+        @array![(contract_address,
+            Event::TipPageCreated(TipPageCreated{
+                page_id,
+                creator: user,
+                page_name: "Test Page",
+                description: "Description",
+                created_at: get_block_timestamp()
+            })
+        )]
+    );
+}
+
+#[test]
 fn test_get_total_pages() {
     let (contract_address, _, _) = setup();
     let dispatcher = IstarktipsDispatcher {contract_address};
