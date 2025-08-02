@@ -156,3 +156,26 @@ fn test_get_tips_for_page() {
     assert_eq!(tips.len(), 1);
     assert_eq!(*tips[0].amount, amount);
 }
+
+#[test]
+fn test_get_creator_pages() {
+    let (contract_address, _, _) = setup();
+    let dispatcher = IstarktipsDispatcher {contract_address};
+
+    let user: ContractAddress = contract_address_const::<'2'>();
+
+    start_cheat_caller_address(contract_address, user);
+    
+    // Create multiple pages
+    let page1_id = dispatcher.create_tip_page(user, "Page 1", "Description 1");
+    let page2_id = dispatcher.create_tip_page(user, "Page 2", "Description 2");
+    
+    stop_cheat_caller_address(contract_address);
+
+    // Get creator's pages
+    let pages: Array<u256> = dispatcher.get_creator_pages(user);
+    
+    assert_eq!(pages.len(), 2);
+    assert_eq!(*pages[0], page1_id);
+    assert_eq!(*pages[1], page2_id);
+}
