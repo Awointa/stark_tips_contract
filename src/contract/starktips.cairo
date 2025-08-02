@@ -41,7 +41,7 @@ mod StarkTips {
     impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
-    const STRK_CONTRACT_ADDRESS: felt252 = 0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d;
+    // const STRK_CONTRACT_ADDRESS: felt252 = 0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d;
 
     #[storage]
     struct Storage {
@@ -64,6 +64,8 @@ mod StarkTips {
         next_page_id: u256,
         total_pages: u256,
         owner: ContractAddress,
+
+        token_address: ContractAddress, // Address of the STRK token contract
     }
 
     #[event]
@@ -100,6 +102,7 @@ mod StarkTips {
         self.owner.write(default_admin);
         self.next_page_id.write(1);
         self.total_pages.write(0);
+        self.token_address.write(token_address);
     }
 
     #[generate_trait]
@@ -188,7 +191,7 @@ mod StarkTips {
             let sender = get_caller_address();
             let creator = tip_page.creator;
 
-            let strk_contract = IERC20Dispatcher{contract_address: contract_address_const::<STRK_CONTRACT_ADDRESS>()};
+            let strk_contract = IERC20Dispatcher{contract_address: self.token_address.read()};
 
             let sender_balance = strk_contract.balance_of(sender);
             assert(sender_balance >= amount, Errors::INSUFFICIENT_BALANCE);
@@ -209,6 +212,9 @@ mod StarkTips {
                 message: message.clone(),
                 timestamp: get_block_timestamp()
             };
+
+            // ADD THIS LINE - Store the tip in the page_tips mapping
+            self.page_tips.write((page_id, _tip.id), _tip);
 
             tip_page.total_tips_recieved += 1;
             tip_page.total_amount_recieved += amount;
@@ -310,12 +316,12 @@ mod StarkTips {
         }
 
         fn get_strk_balance(self: @ContractState, account: ContractAddress) -> u256 {
-            let strk_contract = IERC20Dispatcher{contract_address: contract_address_const::<STRK_CONTRACT_ADDRESS>()};
+            let strk_contract = IERC20Dispatcher{contract_address: self.token_address.read()};
             strk_contract.balance_of(account)
         }
 
         fn get_strk_allowance(self: @ContractState, owner: ContractAddress, spender: ContractAddress) -> u256 {
-            let strk_contract = IERC20Dispatcher{contract_address: contract_address_const::<STRK_CONTRACT_ADDRESS>()};
+            let strk_contract = IERC20Dispatcher{contract_address: self.token_address.read()};
             strk_contract.allowance(owner, spender)
         }
 
