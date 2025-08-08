@@ -196,9 +196,6 @@ pub mod StarkTips {
             let sender_balance = strk_contract.balance_of(sender);
             assert(sender_balance >= amount, Errors::INSUFFICIENT_BALANCE);
 
-            let allowance = strk_contract.allowance(sender, get_contract_address());
-            assert(allowance >= amount, Errors::INSUFFICIENT_ALLOWANCE);
-
             let success = strk_contract.transfer_from(sender, creator, amount);
 
             assert(success, Errors::TRANSFER_FAILED);

@@ -152,13 +152,6 @@ fn test_send_tip(){
     let page_id = dispatcher.create_tip_page(user, page_name, description.clone());
     stop_cheat_caller_address(contract_address);
 
-   // User needs to approve the contract to spend their tokens
-    let amount: u256 = 100000000000000000; // 0.01 STRK
-    start_cheat_caller_address(token_address, user);
-    strk_contract.approve(contract_address, amount);
-    stop_cheat_caller_address(token_address);
-
-
    // Switch back to tip contract context
    start_cheat_caller_address(contract_address, user);
    let message: ByteArray = "Great work!";
@@ -199,12 +192,6 @@ fn test_tip_sent_event() {
     // Create a tip page
     let page_id = dispatcher.create_tip_page(user, page_name, description.clone());
     stop_cheat_caller_address(contract_address);
-
-   // User needs to approve the contract to spend their tokens
-    let amount: u256 = 100000000000000000; // 0.01 STRK
-    start_cheat_caller_address(token_address, user);
-    strk_contract.approve(contract_address, amount);
-    stop_cheat_caller_address(token_address);
 
 
    // Switch back to tip contract context
@@ -261,12 +248,6 @@ fn test_get_tips_for_page() {
     // Create a tip page
     let page_id = dispatcher.create_tip_page(user, page_name, description.clone());
     stop_cheat_caller_address(contract_address);
-
-   // User needs to approve the contract to spend their tokens
-    let amount: u256 = 100000000000000000; // 0.01 STRK
-    start_cheat_caller_address(token_address, user);
-    strk_contract.approve(contract_address, amount);
-    stop_cheat_caller_address(token_address);
 
 
    // Switch back to tip contract context
@@ -459,11 +440,6 @@ fn test_get_recent_tips() {
     dispatcher.create_tip_page(user, page_name, description.clone());
     stop_cheat_caller_address(contract_address);
 
-   // User needs to approve the contract to spend their tokens
-    let amount: u256 = 100000000000000000; // 0.01 STRK
-    start_cheat_caller_address(token_address, user);
-    strk_contract.approve(contract_address, amount);
-    stop_cheat_caller_address(token_address);
 
 
     start_cheat_caller_address(contract_address, user);
